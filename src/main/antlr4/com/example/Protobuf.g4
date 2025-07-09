@@ -618,6 +618,7 @@ keywords
     | PACKAGE
     | OPTION
     | OPTIONAL
+    | REQUIRED
     | REPEATED
     | ONEOF
     | MAP
