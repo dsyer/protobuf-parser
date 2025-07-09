@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
+import com.google.protobuf.DescriptorProtos.EnumDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
 
@@ -132,5 +133,34 @@ public class DescriptorParserTests {
 		assertThat(type.getField(1).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
 		assertThat(type.getField(1).getTypeName()).isEqualTo("Foo");
 	}
+
+	@Test
+	public void testParseEnum() {
+		String input = """
+				syntax = "proto3";
+				enum TestEnum {
+					UNKNOWN = 0;
+					FOO = 1;
+					BAR = 2;
+				}
+				message TestMessage {
+					TestEnum value = 1;
+				}
+				""";
+		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProto proto = parser.parse("test.proto", input);
+		assertThat(proto.getEnumTypeList()).hasSize(1);
+		EnumDescriptorProto enumType = proto.getEnumTypeList().get(0);
+		assertThat(enumType.getName().toString()).isEqualTo("TestEnum");
+		assertThat(enumType.getValueList()).hasSize(3);
+		assertThat(enumType.getValueList().get(0).getName()).isEqualTo("UNKNOWN");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+		DescriptorProto type = proto.getMessageTypeList().get(0);
+		assertThat(type.getName().toString()).isEqualTo("TestMessage");
+		FieldDescriptorProto field = type.getField(0);
+		assertThat(field.getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
+		assertThat(field.getTypeName()).isEqualTo("TestEnum");
+	}
+
 
 }
