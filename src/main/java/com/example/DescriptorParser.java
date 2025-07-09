@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Stack;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
@@ -30,10 +31,11 @@ import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.example.ProtobufParser.FieldContext;
+import com.example.ProtobufParser.FieldLabelContext;
 import com.example.ProtobufParser.TypeContext;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
-import com.google.protobuf.DescriptorProtos.DescriptorProto.Builder;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Label;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto.Type;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
@@ -107,7 +109,8 @@ public class DescriptorParser {
 		});
 
 		return parser.proto().accept(new ProtobufBaseVisitor<FileDescriptorProto>() {
-			private Builder type;
+			private Stack<DescriptorProto.Builder> type = new Stack<>();
+			private Stack<FieldDescriptorProto.Builder> field = new Stack<>();
 
 			@Override
 			protected FileDescriptorProto defaultResult() {
@@ -115,19 +118,40 @@ public class DescriptorParser {
 			}
 
 			@Override
+			public FileDescriptorProto visitFieldLabel(FieldLabelContext ctx) {
+				this.field.peek().setLabel(findLabel(ctx));
+				return super.visitFieldLabel(ctx);
+			}
+
+			private Label findLabel(FieldLabelContext ctx) {
+				if (ctx.OPTIONAL() != null) {
+					return FieldDescriptorProto.Label.LABEL_OPTIONAL;
+				}
+				if (ctx.REQUIRED() != null) {
+					return FieldDescriptorProto.Label.LABEL_REQUIRED;
+				}
+				if (ctx.REPEATED() != null) {
+					return FieldDescriptorProto.Label.LABEL_REPEATED;
+				}
+				throw new IllegalStateException("Unknown field label: " + ctx.getText());
+			}
+
+			@Override
 			public FileDescriptorProto visitField(FieldContext ctx) {
 				// TODO: handle field options if needed
-				// TODO: handle field labels (optional, required, repeated)
 				Type fieldType = findType(ctx.type());
 				FieldDescriptorProto.Builder field = FieldDescriptorProto.newBuilder()
 						.setName(ctx.fieldName().getText())
 						.setNumber(Integer.valueOf(ctx.fieldNumber().getText()))
 						.setType(fieldType);
+				this.field.push(field);
 				if (fieldType == FieldDescriptorProto.Type.TYPE_MESSAGE) {
 					field.setTypeName(ctx.type().messageType().getText());
 				}
-				this.type.addField(field.build());
-				return super.visitField(ctx);
+				FileDescriptorProto result = super.visitField(ctx);
+				this.type.peek().addField(field.build());
+				this.field.pop();
+				return result;
 			}
 
 			private Type findType(TypeContext ctx) {
@@ -188,10 +212,12 @@ public class DescriptorParser {
 			@Override
 			public FileDescriptorProto visitMessageDef(ProtobufParser.MessageDefContext ctx) {
 				System.err.println("Message: " + ctx.messageName().getText());
-				this.type = DescriptorProto.newBuilder()
+				DescriptorProto.Builder type = DescriptorProto.newBuilder()
 						.setName(ctx.messageName().getText());
+				this.type.push(type);
 				FileDescriptorProto result = super.visitMessageDef(ctx);
 				builder.addMessageType(type);
+				this.type.pop();
 				return result;
 			}
 

@@ -36,6 +36,7 @@ optionName
 // Normal Field
 fieldLabel
     : OPTIONAL
+    | REQUIRED
     | REPEATED
     ;
 
@@ -331,6 +332,10 @@ OPTIONAL
 
 REPEATED
     : 'repeated'
+    ;
+
+REQUIRED
+    : 'required'
     ;
 
 ONEOF

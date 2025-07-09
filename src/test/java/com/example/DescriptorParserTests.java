@@ -42,7 +42,7 @@ public class DescriptorParserTests {
 	}
 
 	@Test
-	public void testParseDescriptor() {
+	public void testParseSimpleDescriptor() {
 		String input = """
 				syntax = "proto3";
 				message TestMessage {
@@ -87,4 +87,50 @@ public class DescriptorParserTests {
 		assertThat(type.getField(1).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
 		assertThat(type.getField(1).getTypeName()).isEqualTo("Foo");
 	}
+
+	@Test
+	public void testParseLabel() {
+		String input = """
+				syntax = "proto3";
+				message TestMessage {
+					repeated string value = 1;
+				}
+				""";
+		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProto proto = parser.parse("test.proto", input);
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+		DescriptorProto type = proto.getMessageTypeList().get(0);
+		assertThat(type.getName().toString()).isEqualTo("TestMessage");
+		assertThat(type.getFieldList()).hasSize(1);
+		FieldDescriptorProto field = type.getField(0);
+		assertThat(field.getName()).isEqualTo("value");
+		assertThat(field.getNumber()).isEqualTo(1);
+		assertThat(field.getLabel()).isEqualTo(FieldDescriptorProto.Label.LABEL_REPEATED);
+	}
+
+	@Test
+	public void testParseNestedMessageType() {
+		String input = """
+				syntax = "proto3";
+				message TestMessage {
+					string name = 1;
+					message Foo {
+						string value = 1;
+						int32 count = 2;
+					}
+					Foo foo = 2;
+				}
+				""";
+		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProto proto = parser.parse("test.proto", input);
+		assertThat(proto.getMessageTypeList()).hasSize(2);
+		DescriptorProto type = proto.getMessageTypeList().get(1);
+		assertThat(type.getName().toString()).isEqualTo("TestMessage");
+		assertThat(type.getFieldList()).hasSize(2);
+		assertThat(type.getField(1).getName()).isEqualTo("foo");
+		assertThat(type.getField(1).getNumber()).isEqualTo(2);
+		assertThat(type.getField(1).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
+		assertThat(type.getField(1).getTypeName()).isEqualTo("Foo");
+	}
+
 }
