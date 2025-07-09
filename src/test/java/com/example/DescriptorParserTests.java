@@ -37,7 +37,7 @@ public class DescriptorParserTests {
 				""";
 		DescriptorParser parser = new DescriptorParser();
 		assertThrows(IllegalStateException.class, () -> {
-			parser.parse(input);
+			parser.parse("test.proto", input);
 		});
 	}
 
@@ -51,7 +51,7 @@ public class DescriptorParserTests {
 				}
 				""";
 		DescriptorParser parser = new DescriptorParser();
-		FileDescriptorProto proto = parser.parse(input);
+		FileDescriptorProto proto = parser.parse("test.proto", input);
 		assertThat(proto.getMessageTypeList()).hasSize(1);
 		DescriptorProto type = proto.getMessageTypeList().get(0);
 		assertThat(type.getName().toString()).isEqualTo("TestMessage");
@@ -77,7 +77,7 @@ public class DescriptorParserTests {
 				}
 				""";
 		DescriptorParser parser = new DescriptorParser();
-		FileDescriptorProto proto = parser.parse(input);
+		FileDescriptorProto proto = parser.parse("test.proto", input);
 		assertThat(proto.getMessageTypeList()).hasSize(2);
 		DescriptorProto type = proto.getMessageTypeList().get(0);
 		assertThat(type.getName().toString()).isEqualTo("TestMessage");
