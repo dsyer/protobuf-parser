@@ -1,9 +1,3 @@
-package com.example;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-
 /*
  * Copyright 2024-2024 the original author or authors.
  *
@@ -19,6 +13,12 @@ import java.nio.file.Path;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package com.example;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
