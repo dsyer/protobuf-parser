@@ -87,12 +87,15 @@ public class DescriptorParser {
 			public FileDescriptorProto visitField(FieldContext ctx) {
 				// TODO: handle field options if needed
 				// TODO: handle field labels (optional, required, repeated)
-				this.type.addField(
-						FieldDescriptorProto.newBuilder()
-								.setName(ctx.fieldName().getText())
-								.setNumber(Integer.valueOf(ctx.fieldNumber().getText()))
-								.setType(findType(ctx.type()))
-								.build());
+				Type fieldType = findType(ctx.type());
+				FieldDescriptorProto.Builder field = FieldDescriptorProto.newBuilder()
+						.setName(ctx.fieldName().getText())
+						.setNumber(Integer.valueOf(ctx.fieldNumber().getText()))
+						.setType(fieldType);
+				if (fieldType == FieldDescriptorProto.Type.TYPE_MESSAGE) {
+					field.setTypeName(ctx.type().messageType().getText());
+				}
+				this.type.addField(field.build());
 				return super.visitField(ctx);
 			}
 
@@ -141,6 +144,12 @@ public class DescriptorParser {
 				}
 				if (ctx.SINT64() != null) {
 					return FieldDescriptorProto.Type.TYPE_SINT64;
+				}
+				if (ctx.messageType() != null) {
+					return FieldDescriptorProto.Type.TYPE_MESSAGE;
+				}
+				if (ctx.enumType() != null) {
+					return FieldDescriptorProto.Type.TYPE_ENUM;
 				}
 				throw new IllegalStateException("Unknown type: " + ctx.getText());
 			}

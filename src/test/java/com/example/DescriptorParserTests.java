@@ -63,4 +63,28 @@ public class DescriptorParserTests {
 		assertThat(type.getField(1).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_INT32);
 	}
 
+	@Test
+	public void testParseMessageType() {
+		String input = """
+				syntax = "proto3";
+				message TestMessage {
+					string name = 1;
+					Foo foo = 2;
+				}
+				message Foo {
+					string value = 1;
+					int32 count = 2;
+				}
+				""";
+		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProto proto = parser.parse(input);
+		assertThat(proto.getMessageTypeList()).hasSize(2);
+		DescriptorProto type = proto.getMessageTypeList().get(0);
+		assertThat(type.getName().toString()).isEqualTo("TestMessage");
+		assertThat(type.getFieldList()).hasSize(2);
+		assertThat(type.getField(1).getName()).isEqualTo("foo");
+		assertThat(type.getField(1).getNumber()).isEqualTo(2);
+		assertThat(type.getField(1).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
+		assertThat(type.getField(1).getTypeName()).isEqualTo("Foo");
+	}
 }
