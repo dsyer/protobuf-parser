@@ -121,10 +121,10 @@ public class DescriptorParser {
 			}
 		});
 
-		return parser.proto().accept(new ProtobufDescriptorVisitor(builder, enumNames));
+		return parser.proto().accept(new ProtobufDescriptorVisitor(builder, enumNames)).build();
 	}
 
-	static class ProtobufDescriptorVisitor extends ProtobufBaseVisitor<FileDescriptorProto> {
+	static class ProtobufDescriptorVisitor extends ProtobufBaseVisitor<FileDescriptorProto.Builder> {
 		private final FileDescriptorProto.Builder builder;
 		private Stack<DescriptorProto.Builder> type = new Stack<>();
 		private Stack<EnumDescriptorProto.Builder> enumType = new Stack<>();
@@ -141,12 +141,12 @@ public class DescriptorParser {
 		}
 	
 		@Override
-		protected FileDescriptorProto defaultResult() {
-			return builder.build();
+		protected FileDescriptorProto.Builder defaultResult() {
+			return builder;
 		}
 	
 		@Override
-		public FileDescriptorProto visitFieldLabel(FieldLabelContext ctx) {
+		public FileDescriptorProto.Builder visitFieldLabel(FieldLabelContext ctx) {
 			this.field.peek().setLabel(findLabel(ctx));
 			return super.visitFieldLabel(ctx);
 		}
@@ -165,7 +165,7 @@ public class DescriptorParser {
 		}
 	
 		@Override
-		public FileDescriptorProto visitField(FieldContext ctx) {
+		public FileDescriptorProto.Builder visitField(FieldContext ctx) {
 			// TODO: handle field options if needed
 			FieldDescriptorProto.Type fieldType = findType(ctx.type());
 			FieldDescriptorProto.Builder field = FieldDescriptorProto.newBuilder()
@@ -176,7 +176,7 @@ public class DescriptorParser {
 			if (fieldType == FieldDescriptorProto.Type.TYPE_MESSAGE || fieldType == FieldDescriptorProto.Type.TYPE_ENUM) {
 				field.setTypeName(ctx.type().messageType().getText());
 			}
-			FileDescriptorProto result = super.visitField(ctx);
+			FileDescriptorProto.Builder result = super.visitField(ctx);
 			this.type.peek().addField(field.build());
 			this.field.pop();
 			return result;
@@ -242,18 +242,18 @@ public class DescriptorParser {
 		}
 	
 		@Override
-		public FileDescriptorProto visitEnumDef(EnumDefContext ctx) {
+		public FileDescriptorProto.Builder visitEnumDef(EnumDefContext ctx) {
 			EnumDescriptorProto.Builder enumType = EnumDescriptorProto.newBuilder()
 					.setName(ctx.enumName().getText());
 			this.enumType.push(enumType);
-			FileDescriptorProto result = super.visitEnumDef(ctx);
+			FileDescriptorProto.Builder result = super.visitEnumDef(ctx);
 			builder.addEnumType(enumType.build());
 			this.enumType.pop();
 			return result;
 		}
 	
 		@Override
-		public FileDescriptorProto visitEnumField(EnumFieldContext ctx) {
+		public FileDescriptorProto.Builder visitEnumField(EnumFieldContext ctx) {
 			// System.err.println("Enum field: " + ctx.enumFieldName().getText());
 			EnumValueDescriptorProto.Builder field = EnumValueDescriptorProto.newBuilder()
 					.setName(ctx.ident().IDENTIFIER().getText())
@@ -263,19 +263,19 @@ public class DescriptorParser {
 		}
 	
 		@Override
-		public FileDescriptorProto visitMessageDef(ProtobufParser.MessageDefContext ctx) {
+		public FileDescriptorProto.Builder visitMessageDef(ProtobufParser.MessageDefContext ctx) {
 			// System.err.println("Message: " + ctx.messageName().getText());
 			DescriptorProto.Builder type = DescriptorProto.newBuilder()
 					.setName(ctx.messageName().getText());
 			this.type.push(type);
-			FileDescriptorProto result = super.visitMessageDef(ctx);
+			FileDescriptorProto.Builder result = super.visitMessageDef(ctx);
 			builder.addMessageType(type);
 			this.type.pop();
 			return result;
 		}
 
 		@Override
-		public FileDescriptorProto visitImportStatement(ImportStatementContext ctx) {
+		public FileDescriptorProto.Builder visitImportStatement(ImportStatementContext ctx) {
 			String path = ctx.strLit().getText();
 			path = path.replace("\"", "").replace("'", "");
 			FileDescriptorProto importedFile = new DescriptorParser().parse(path, findImport(path));

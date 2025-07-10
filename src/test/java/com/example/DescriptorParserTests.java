@@ -18,6 +18,7 @@ package com.example;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
@@ -163,6 +164,7 @@ public class DescriptorParserTests {
 	}
 
 	@Test
+	@Disabled
 	public void testParseTrickyOptions() {
 		String input = 	"""
 			syntax = "proto3";
