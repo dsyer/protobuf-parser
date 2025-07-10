@@ -50,6 +50,16 @@ public class DescriptorParser {
 
 	private Map<String, FileDescriptorProto> cache = new HashMap<>();
 
+	private final Path base;
+
+	public DescriptorParser() {
+		this(Path.of(""));
+	}
+
+	public DescriptorParser(Path base) {
+		this.base = base;
+	}
+
 	public FileDescriptorProto parse(String name, String input) {
 		CharStream stream = CharStreams.fromString(input);
 		return parse(name, stream);
@@ -104,11 +114,27 @@ public class DescriptorParser {
 		return builder.build();
 	}
 
-	public FileDescriptorSet parse(Path input) {
+	private FileDescriptorSet parse(Path path) {
+		if (path.toString().endsWith(".proto")) {
+			String location = path.toString();
+			if (location.startsWith("/")) {
+				location = location.substring(1); // Ensure it doesn't start with a slash
+			}
+			InputStream resource = getClass().getClassLoader().getResourceAsStream(path.toString());
+			if (resource != null) {
+				try {
+					FileDescriptorProto proto = parse(path.toString(), CharStreams.fromStream(resource));
+					return resolve(proto);
+				} catch (IOException e) {
+					throw new IllegalStateException("Failed to read resource: " + path, e);
+				}
+			}
+		}
+		Path input = path.isAbsolute() ? path : base.resolve(path);
 		if (!input.toFile().exists()) {
 			throw new IllegalArgumentException("Input file does not exist: " + input);
 		}
-		if (!Files.isDirectory(input) && input.toString().endsWith(".proto")) {
+		if (!Files.isDirectory(input) && !input.toString().endsWith(".proto")) {
 			throw new IllegalArgumentException("Input file is not .proto: " + input);
 		}
 		try {
@@ -118,14 +144,21 @@ public class DescriptorParser {
 						.filter(file -> !Files.isDirectory(file) && file.toString().endsWith(".proto"))
 						.forEach(file -> {
 							try {
-								builder.addFile(parse(input.toString(), CharStreams.fromPath(file)));
+								FileDescriptorProto proto = parse(input.toString(), CharStreams.fromPath(file));
+								for (FileDescriptorProto resolved : resolve(proto).getFileList()) {
+									builder.addFile(resolved);
+								}
 							} catch (IOException e) {
 								throw new IllegalStateException("Failed to read file: " + file, e);
 							}
 						});
 				return builder.build();
 			}
-			return builder.addFile(parse(input.toString(), CharStreams.fromPath(input))).build();
+			FileDescriptorProto proto = parse(path.toString(), CharStreams.fromPath(input));
+			for (FileDescriptorProto resolved : resolve(proto).getFileList()) {
+				builder.addFile(resolved);
+			}
+			return builder.build();
 		} catch (IOException e) {
 			throw new IllegalStateException("Failed to read input file: " + input, e);
 		}
@@ -172,7 +205,15 @@ public class DescriptorParser {
 		}
 		InputStream stream = getClass().getClassLoader().getResourceAsStream(path);
 		if (stream == null) {
-			throw new IllegalArgumentException("Import not found: " + path);
+			if (base.resolve(path).toFile().exists()) {
+				try {
+					stream = Files.newInputStream(base.resolve(path));
+				} catch (IOException e) {
+					throw new IllegalStateException("Failed to read import: " + path, e);
+				}
+			} else {
+				throw new IllegalArgumentException("Import not found: " + path);
+			}
 		}
 		return stream;
 	}

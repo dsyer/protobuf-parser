@@ -17,9 +17,12 @@ package com.example;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 
 public class ClasspathDescriptorTests {
 
@@ -33,6 +36,28 @@ public class ClasspathDescriptorTests {
 		assertThat(proto.getMessageTypeList()).hasSize(1);
 		assertThat(proto.getMessageType(0).getName()).isEqualTo("Empty");
 		assertThat(proto.getMessageType(0).getFieldList()).isEmpty();
+	}
+
+	@Test
+	public void testDescriptorFromClasspath() {
+		DescriptorParser parser = new DescriptorParser();
+		// Comes with the protobuf-java library:
+		FileDescriptorProto proto = parser.parse(Path.of("google/protobuf/empty.proto")).getFile(0);
+		assertThat(proto.getName()).isEqualTo("google/protobuf/empty.proto");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+		assertThat(proto.getMessageType(0).getName()).isEqualTo("Empty");
+		assertThat(proto.getMessageType(0).getFieldList()).isEmpty();
+	}
+
+	@Test
+	public void testDescriptorWithImportsFromClasspath() {
+		DescriptorParser parser = new DescriptorParser();
+		// Comes with the protobuf-java library:
+		FileDescriptorSet files = parser.parse(Path.of("google/protobuf/type.proto"));
+		assertThat(files.getFileCount()).isEqualTo(3);
+		FileDescriptorProto proto = files.getFile(0);
+		assertThat(proto.getName()).isEqualTo("google/protobuf/any.proto");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
 	}
 
 }
