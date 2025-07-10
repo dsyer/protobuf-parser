@@ -16,12 +16,13 @@
 
 package com.example;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -31,7 +32,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.example.ProtobufParser.EnumDefContext;
 import com.example.ProtobufParser.EnumFieldContext;
@@ -48,6 +48,8 @@ import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 
 public class DescriptorParser {
 
+	private Map<String, FileDescriptorProto> cache = new HashMap<>();
+
 	public FileDescriptorProto parse(String name, String input) {
 		CharStream stream = CharStreams.fromString(input);
 		return parse(name, stream);
@@ -59,6 +61,39 @@ public class DescriptorParser {
 		} catch (IOException e) {
 			throw new IllegalStateException("Failed to read input stream: " + input, e);
 		}
+	}
+
+	public FileDescriptorSet resolve(FileDescriptorProto... inputs) {
+		FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();
+		Set<String> names = new HashSet<>();
+		for (FileDescriptorProto input : inputs) {
+			resolve(builder, input, names);
+		}
+		return builder.build();
+	}
+
+	private void resolve(FileDescriptorSet.Builder builder, FileDescriptorProto proto, Set<String> names) {
+		if (names.contains(proto.getName())) {
+			return; // Already processed
+		}
+		for (String name : proto.getDependencyList()) {
+			if (names.contains(name)) {
+				continue; // Already processed
+			}
+			FileDescriptorProto dependency;
+			if (cache.containsKey(name)) {
+				dependency = cache.get(name);
+			} else {
+				try (InputStream stream = findImport(name)) {
+					dependency = parse(name, CharStreams.fromStream(stream));
+				} catch (IOException e) {
+					throw new IllegalStateException("Failed to read import: " + name, e);
+				}
+			}
+			resolve(builder, dependency, names);
+		}
+		builder.addFile(proto);
+		names.add(proto.getName());
 	}
 
 	public FileDescriptorSet parse(Path... inputs) {
@@ -97,6 +132,11 @@ public class DescriptorParser {
 	}
 
 	private FileDescriptorProto parse(String name, CharStream stream) {
+
+		if (cache.containsKey(name)) {
+			return cache.get(name);
+		}
+
 		ProtobufLexer lexer = new ProtobufLexer(stream);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		ProtobufParser parser = new ProtobufParser(tokens);
@@ -121,36 +161,49 @@ public class DescriptorParser {
 			}
 		});
 
-		return parser.proto().accept(new ProtobufDescriptorVisitor(builder, enumNames)).build();
+		FileDescriptorProto proto = parser.proto().accept(new ProtobufDescriptorVisitor(builder, enumNames)).build();
+		cache.put(name, proto);
+		return proto;
 	}
 
-	static class ProtobufDescriptorVisitor extends ProtobufBaseVisitor<FileDescriptorProto.Builder> {
+	private InputStream findImport(String path) {
+		if (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+		InputStream stream = getClass().getClassLoader().getResourceAsStream(path);
+		if (stream == null) {
+			throw new IllegalArgumentException("Import not found: " + path);
+		}
+		return stream;
+	}
+
+	class ProtobufDescriptorVisitor extends ProtobufBaseVisitor<FileDescriptorProto.Builder> {
 		private final FileDescriptorProto.Builder builder;
 		private Stack<DescriptorProto.Builder> type = new Stack<>();
 		private Stack<EnumDescriptorProto.Builder> enumType = new Stack<>();
 		private Stack<FieldDescriptorProto.Builder> field = new Stack<>();
 		private Set<String> enumNames;
-	
+
 		public ProtobufDescriptorVisitor(FileDescriptorProto.Builder builder) {
 			this(builder, Set.of());
 		}
-	
+
 		public ProtobufDescriptorVisitor(FileDescriptorProto.Builder builder, Set<String> enumNames) {
 			this.builder = builder;
 			this.enumNames = enumNames;
 		}
-	
+
 		@Override
 		protected FileDescriptorProto.Builder defaultResult() {
 			return builder;
 		}
-	
+
 		@Override
 		public FileDescriptorProto.Builder visitFieldLabel(FieldLabelContext ctx) {
 			this.field.peek().setLabel(findLabel(ctx));
 			return super.visitFieldLabel(ctx);
 		}
-	
+
 		private FieldDescriptorProto.Label findLabel(FieldLabelContext ctx) {
 			if (ctx.OPTIONAL() != null) {
 				return FieldDescriptorProto.Label.LABEL_OPTIONAL;
@@ -163,7 +216,7 @@ public class DescriptorParser {
 			}
 			throw new IllegalStateException("Unknown field label: " + ctx.getText());
 		}
-	
+
 		@Override
 		public FileDescriptorProto.Builder visitField(FieldContext ctx) {
 			// TODO: handle field options if needed
@@ -173,7 +226,8 @@ public class DescriptorParser {
 					.setNumber(Integer.valueOf(ctx.fieldNumber().getText()))
 					.setType(fieldType);
 			this.field.push(field);
-			if (fieldType == FieldDescriptorProto.Type.TYPE_MESSAGE || fieldType == FieldDescriptorProto.Type.TYPE_ENUM) {
+			if (fieldType == FieldDescriptorProto.Type.TYPE_MESSAGE
+					|| fieldType == FieldDescriptorProto.Type.TYPE_ENUM) {
 				field.setTypeName(ctx.type().messageType().getText());
 			}
 			FileDescriptorProto.Builder result = super.visitField(ctx);
@@ -181,7 +235,7 @@ public class DescriptorParser {
 			this.field.pop();
 			return result;
 		}
-	
+
 		private FieldDescriptorProto.Type findType(TypeContext ctx) {
 			if (ctx.STRING() != null) {
 				return FieldDescriptorProto.Type.TYPE_STRING;
@@ -240,7 +294,7 @@ public class DescriptorParser {
 			}
 			throw new IllegalStateException("Unknown type: " + ctx.getText());
 		}
-	
+
 		@Override
 		public FileDescriptorProto.Builder visitEnumDef(EnumDefContext ctx) {
 			EnumDescriptorProto.Builder enumType = EnumDescriptorProto.newBuilder()
@@ -251,7 +305,7 @@ public class DescriptorParser {
 			this.enumType.pop();
 			return result;
 		}
-	
+
 		@Override
 		public FileDescriptorProto.Builder visitEnumField(EnumFieldContext ctx) {
 			// System.err.println("Enum field: " + ctx.enumFieldName().getText());
@@ -261,7 +315,7 @@ public class DescriptorParser {
 			this.enumType.peek().addValue(field.build());
 			return super.visitEnumField(ctx);
 		}
-	
+
 		@Override
 		public FileDescriptorProto.Builder visitMessageDef(ProtobufParser.MessageDefContext ctx) {
 			// System.err.println("Message: " + ctx.messageName().getText());
@@ -278,22 +332,11 @@ public class DescriptorParser {
 		public FileDescriptorProto.Builder visitImportStatement(ImportStatementContext ctx) {
 			String path = ctx.strLit().getText();
 			path = path.replace("\"", "").replace("'", "");
-			FileDescriptorProto importedFile = new DescriptorParser().parse(path, findImport(path));
+			parse(path, findImport(path));
 			builder.addDependency(path);
 			return super.visitImportStatement(ctx);
 		}
 
-		private InputStream findImport(String path) {
-			if (path.startsWith("/")) {
-				path = path.substring(1);
-			}
-			InputStream stream = getClass().getClassLoader().getResourceAsStream(path);
-			if (stream == null) {
-				throw new IllegalArgumentException("Import not found: " + path);
-			}
-			return stream;
-		}
-
 	}
-	
+
 }

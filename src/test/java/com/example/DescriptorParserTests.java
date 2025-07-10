@@ -25,6 +25,7 @@ import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.DescriptorProtos.EnumDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 
 public class DescriptorParserTests {
 
@@ -216,6 +217,7 @@ public class DescriptorParserTests {
 				""";
 		DescriptorParser parser = new DescriptorParser();
 		FileDescriptorProto proto = parser.parse("test.proto", input);
+		FileDescriptorSet files = parser.resolve(proto);
 		assertThat(proto.getDependencyList()).hasSize(1);
 		assertThat(proto.getDependency(0)).isEqualTo("google/protobuf/any.proto");
 		// The Any type is defined in the imported file, so it should not be in
@@ -225,6 +227,8 @@ public class DescriptorParserTests {
 		FieldDescriptorProto field = type.getField(0);
 		assertThat(field.getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
 		assertThat(field.getTypeName()).isEqualTo("google.protobuf.Any");
+		proto = files.getFile(0);
+		assertThat(proto.getName()).isEqualTo("google/protobuf/any.proto");
 	}
 
 }
