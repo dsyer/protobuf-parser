@@ -16,6 +16,7 @@
 
 package com.example;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -36,6 +37,7 @@ import com.example.ProtobufParser.EnumDefContext;
 import com.example.ProtobufParser.EnumFieldContext;
 import com.example.ProtobufParser.FieldContext;
 import com.example.ProtobufParser.FieldLabelContext;
+import com.example.ProtobufParser.ImportStatementContext;
 import com.example.ProtobufParser.TypeContext;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.DescriptorProtos.EnumDescriptorProto;
@@ -271,12 +273,27 @@ public class DescriptorParser {
 			this.type.pop();
 			return result;
 		}
-	
+
 		@Override
-		public FileDescriptorProto visit(ParseTree tree) {
-			FileDescriptorProto result = super.visit(tree);
-			return result;
+		public FileDescriptorProto visitImportStatement(ImportStatementContext ctx) {
+			String path = ctx.strLit().getText();
+			path = path.replace("\"", "").replace("'", "");
+			FileDescriptorProto importedFile = new DescriptorParser().parse(path, findImport(path));
+			builder.addDependency(path);
+			return super.visitImportStatement(ctx);
 		}
+
+		private InputStream findImport(String path) {
+			if (path.startsWith("/")) {
+				path = path.substring(1);
+			}
+			InputStream stream = getClass().getClassLoader().getResourceAsStream(path);
+			if (stream == null) {
+				throw new IllegalArgumentException("Import not found: " + path);
+			}
+			return stream;
+		}
+
 	}
 	
 }

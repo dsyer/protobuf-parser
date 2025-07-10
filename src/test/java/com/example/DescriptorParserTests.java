@@ -203,5 +203,26 @@ public class DescriptorParserTests {
 			assertThat(type.getField(1).getTypeName()).isEqualTo("google.rpc.Status");
 	}	
 
+	@Test
+	public void testParseImport() {
+		String input = """
+				syntax = "proto3";
+				import "google/protobuf/any.proto";
+				message TestMessage {
+					google.protobuf.Any value = 1;
+				}
+				""";
+		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProto proto = parser.parse("test.proto", input);
+		assertThat(proto.getDependencyList()).hasSize(1);
+		assertThat(proto.getDependency(0)).isEqualTo("google/protobuf/any.proto");
+		// The Any type is defined in the imported file, so it should not be in
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+		DescriptorProto type = proto.getMessageTypeList().get(0);
+		assertThat(type.getName().toString()).isEqualTo("TestMessage");
+		FieldDescriptorProto field = type.getField(0);
+		assertThat(field.getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
+		assertThat(field.getTypeName()).isEqualTo("google.protobuf.Any");
+	}
 
 }
