@@ -38,6 +38,7 @@ import com.example.ProtobufParser.EnumFieldContext;
 import com.example.ProtobufParser.FieldContext;
 import com.example.ProtobufParser.FieldLabelContext;
 import com.example.ProtobufParser.ImportStatementContext;
+import com.example.ProtobufParser.PackageStatementContext;
 import com.example.ProtobufParser.TypeContext;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.DescriptorProtos.EnumDescriptorProto;
@@ -45,6 +46,7 @@ import com.google.protobuf.DescriptorProtos.EnumValueDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
+import com.google.protobuf.DescriptorProtos.FileDescriptorProto.Builder;
 
 public class DescriptorParser {
 
@@ -195,9 +197,21 @@ public class DescriptorParser {
 			}
 		});
 		parser.addParseListener(new ProtobufBaseListener() {
+			private String packageName;
+			@Override
+			public void exitPackageStatement(PackageStatementContext ctx) {
+				String packageName = ctx.fullIdent().getText();
+				if (!packageName.isEmpty()) {
+					this.packageName = packageName;
+				}
+			}
 			@Override
 			public void exitEnumDef(EnumDefContext ctx) {
+				// TODO: bug here if the enum name is re-used in another package
 				enumNames.add(ctx.enumName().getText());
+				if (this.packageName != null) {
+					enumNames.add(this.packageName + "." + ctx.enumName().getText());
+				}
 			}
 		});
 
@@ -210,11 +224,6 @@ public class DescriptorParser {
 					parse(path, findImport(path));
 				}
 				return super.visitImportStatement(ctx);
-			}
-
-			@Override
-			public Object visitEnumDef(EnumDefContext ctx) {
-				return super.visitEnumDef(ctx);
 			}
 		});
 		parser.reset();
@@ -255,6 +264,15 @@ public class DescriptorParser {
 		@Override
 		protected FileDescriptorProto.Builder defaultResult() {
 			return builder;
+		}
+
+		@Override
+		public Builder visitPackageStatement(PackageStatementContext ctx) {
+			String packageName = ctx.fullIdent().getText();
+			if (!packageName.isEmpty()) {
+				builder.setPackage(packageName);
+			}
+			return super.visitPackageStatement(ctx);
 		}
 
 		@Override

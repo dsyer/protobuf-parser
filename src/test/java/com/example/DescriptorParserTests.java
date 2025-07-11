@@ -231,4 +231,18 @@ public class DescriptorParserTests {
 		assertThat(proto.getName()).isEqualTo("google/protobuf/any.proto");
 	}
 
+	@Test
+	public void testParsePackage() {
+		String input = """
+				syntax = "proto3";
+				package sample;
+				message TestMessage {
+					string value = 1;
+				}
+				""";
+		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProto proto = parser.parse("test.proto", input);
+		assertThat(proto.getPackage()).isEqualTo("sample");
+	}
+
 }
