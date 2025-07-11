@@ -139,14 +139,20 @@ public class DescriptorParser {
 		}
 		try {
 			FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();
+			Set<String> names = new HashSet<>();
 			if (input.toFile().isDirectory()) {
 				Files.walk(input)
 						.filter(file -> !Files.isDirectory(file) && file.toString().endsWith(".proto"))
 						.forEach(file -> {
 							try {
-								FileDescriptorProto proto = parse(input.toString(), CharStreams.fromPath(file));
+								Path name = base.relativize(file.normalize());
+								FileDescriptorProto proto = parse(name.toString(), CharStreams.fromPath(file));
 								for (FileDescriptorProto resolved : resolve(proto).getFileList()) {
-									builder.addFile(resolved);
+									if (!names.contains(resolved.getName())) {
+										// Avoid duplicates
+										builder.addFile(resolved);
+										names.add(resolved.getName());
+									}
 								}
 							} catch (IOException e) {
 								throw new IllegalStateException("Failed to read file: " + file, e);
@@ -373,7 +379,9 @@ public class DescriptorParser {
 		public FileDescriptorProto.Builder visitImportStatement(ImportStatementContext ctx) {
 			String path = ctx.strLit().getText();
 			path = path.replace("\"", "").replace("'", "");
-			parse(path, findImport(path));
+			if (!cache.containsKey(path)) {
+				parse(path, findImport(path));
+			}
 			builder.addDependency(path);
 			return super.visitImportStatement(ctx);
 		}

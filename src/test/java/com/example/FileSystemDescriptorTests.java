@@ -25,8 +25,8 @@ import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 
 public class FileSystemDescriptorTests {
-	
-		@Test
+
+	@Test
 	public void testDescriptorWithImportsFromBasepath() {
 		DescriptorParser parser = new DescriptorParser(Path.of("src/test/proto/deps"));
 		FileDescriptorSet files = parser.parse(Path.of("foo.proto"));
@@ -38,6 +38,40 @@ public class FileSystemDescriptorTests {
 		assertThat(proto.getName()).isEqualTo("foo.proto");
 		assertThat(proto.getDependencyList()).containsExactly("bar.proto");
 		assertThat(proto.getMessageTypeList()).hasSize(0);
+	}
+
+	@Test
+	public void testMultiDescriptor() {
+		DescriptorParser parser = new DescriptorParser(Path.of("src/test/proto/multi"));
+		FileDescriptorSet files = parser.parse(Path.of("foo.proto"), Path.of("bar.proto"));
+		assertThat(files.getFileCount()).isEqualTo(2);
+		FileDescriptorProto proto = files.getFile(0);
+		assertThat(proto.getName()).isEqualTo("foo.proto");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+		proto = files.getFile(1);
+		assertThat(proto.getName()).isEqualTo("bar.proto");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+	}
+
+	@Test
+	public void testMultiDescriptorScan() {
+		DescriptorParser parser = new DescriptorParser(Path.of("src/test/proto/multi"));
+		FileDescriptorSet files = parser.parse(Path.of("."));
+		assertThat(files.getFileCount()).isEqualTo(2);
+		files.getFileList().forEach(file -> {
+			assertThat(file.getName()).isIn("foo.proto", "bar.proto");
+			assertThat(file.getMessageTypeList()).hasSize(1);
+		});
+	}
+
+	@Test
+	public void testMultiDescriptorScanIncludingImports() {
+		DescriptorParser parser = new DescriptorParser(Path.of("src/test/proto/deps"));
+		FileDescriptorSet files = parser.parse(Path.of("."));
+		assertThat(files.getFileCount()).isEqualTo(2);
+		files.getFileList().forEach(file -> {
+			assertThat(file.getName()).isIn("foo.proto", "bar.proto");
+		});
 	}
 
 }
