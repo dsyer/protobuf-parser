@@ -21,6 +21,8 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
+import com.google.protobuf.DescriptorProtos.DescriptorProto;
+import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 
@@ -38,6 +40,25 @@ public class FileSystemDescriptorTests {
 		assertThat(proto.getName()).isEqualTo("foo.proto");
 		assertThat(proto.getDependencyList()).containsExactly("bar.proto");
 		assertThat(proto.getMessageTypeList()).hasSize(0);
+	}
+
+	@Test
+	public void testDescriptorWithImportedEnum() {
+		DescriptorParser parser = new DescriptorParser(Path.of("src/test/proto/enums"));
+		FileDescriptorSet files = parser.parse(Path.of("foo.proto"));
+		assertThat(files.getFileCount()).isEqualTo(2);
+		FileDescriptorProto proto = files.getFile(0);
+		assertThat(proto.getName()).isEqualTo("bar.proto");
+		assertThat(proto.getEnumTypeList()).hasSize(1);
+		proto = files.getFile(1);
+		assertThat(proto.getName()).isEqualTo("foo.proto");
+		assertThat(proto.getDependencyList()).containsExactly("bar.proto");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+		DescriptorProto type = proto.getMessageType(0);
+		assertThat(type.getName()).isEqualTo("EchoRequest");
+		assertThat(type.getFieldList()).hasSize(2);
+		assertThat(type.getField(0).getName()).isEqualTo("type");
+		assertThat(type.getField(0).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_ENUM);
 	}
 
 	@Test

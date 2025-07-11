@@ -50,6 +50,8 @@ public class DescriptorParser {
 
 	private Map<String, FileDescriptorProto> cache = new HashMap<>();
 
+	private Set<String> enumNames = new HashSet<>();
+
 	private final Path base;
 
 	public DescriptorParser() {
@@ -192,7 +194,6 @@ public class DescriptorParser {
 				throw new IllegalStateException("Syntax error at line " + line + ": " + msg, e);
 			}
 		});
-		Set<String> enumNames = new HashSet<>();
 		parser.addParseListener(new ProtobufBaseListener() {
 			@Override
 			public void exitEnumDef(EnumDefContext ctx) {
@@ -200,7 +201,24 @@ public class DescriptorParser {
 			}
 		});
 
-		FileDescriptorProto proto = parser.proto().accept(new ProtobufDescriptorVisitor(builder, enumNames)).build();
+		parser.proto().accept(new ProtobufBaseVisitor<>() {
+			@Override
+			public Object visitImportStatement(ImportStatementContext ctx) {
+				String path = ctx.strLit().getText();
+				path = path.replace("\"", "").replace("'", "");
+				if (!cache.containsKey(path)) {
+					parse(path, findImport(path));
+				}
+				return super.visitImportStatement(ctx);
+			}
+
+			@Override
+			public Object visitEnumDef(EnumDefContext ctx) {
+				return super.visitEnumDef(ctx);
+			}
+		});
+		parser.reset();
+		FileDescriptorProto proto = parser.proto().accept(new ProtobufDescriptorVisitor(builder)).build();
 		cache.put(name, proto);
 		return proto;
 	}
@@ -229,15 +247,9 @@ public class DescriptorParser {
 		private Stack<DescriptorProto.Builder> type = new Stack<>();
 		private Stack<EnumDescriptorProto.Builder> enumType = new Stack<>();
 		private Stack<FieldDescriptorProto.Builder> field = new Stack<>();
-		private Set<String> enumNames;
 
 		public ProtobufDescriptorVisitor(FileDescriptorProto.Builder builder) {
-			this(builder, Set.of());
-		}
-
-		public ProtobufDescriptorVisitor(FileDescriptorProto.Builder builder, Set<String> enumNames) {
 			this.builder = builder;
-			this.enumNames = enumNames;
 		}
 
 		@Override
@@ -330,7 +342,7 @@ public class DescriptorParser {
 				return FieldDescriptorProto.Type.TYPE_SINT64;
 			}
 			if (ctx.messageType() != null) {
-				if (this.enumNames.contains(ctx.messageType().getText())) {
+				if (DescriptorParser.this.enumNames.contains(ctx.messageType().getText())) {
 					return FieldDescriptorProto.Type.TYPE_ENUM;
 				}
 				return FieldDescriptorProto.Type.TYPE_MESSAGE;
