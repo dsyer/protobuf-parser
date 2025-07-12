@@ -36,7 +36,6 @@ optionName
 // Normal Field
 fieldLabel
     : OPTIONAL
-    | REQUIRED
     | REPEATED
     ;
 
@@ -334,10 +333,6 @@ REPEATED
     : 'repeated'
     ;
 
-REQUIRED
-    : 'required'
-    ;
-
 ONEOF
     : 'oneof'
     ;
@@ -618,7 +613,6 @@ keywords
     | PACKAGE
     | OPTION
     | OPTIONAL
-    | REQUIRED
     | REPEATED
     | ONEOF
     | MAP

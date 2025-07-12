@@ -285,9 +285,6 @@ public class DescriptorParser {
 			if (ctx.OPTIONAL() != null) {
 				return FieldDescriptorProto.Label.LABEL_OPTIONAL;
 			}
-			if (ctx.REQUIRED() != null) {
-				return FieldDescriptorProto.Label.LABEL_REQUIRED;
-			}
 			if (ctx.REPEATED() != null) {
 				return FieldDescriptorProto.Label.LABEL_REPEATED;
 			}

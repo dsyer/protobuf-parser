@@ -92,4 +92,28 @@ public class ProtobufParserTests {
 		assertThat(context).isNotNull();
 		assertThat(errorCount.get()).isEqualTo(1);
 	}
+
+	@Test
+	public void testWrongProtoFailure() {
+		String input = """
+				syntax = "proto2";
+				message EchoRequest {
+					optional string name = 1;
+				}
+				""";
+		ProtobufParser parser = new ProtobufParser(
+				new CommonTokenStream(new ProtobufLexer(CharStreams.fromString(input))));
+		AtomicInteger errorCount = new AtomicInteger(0);
+		parser.addErrorListener(new BaseErrorListener() {
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+					int line, int charPositionInLine, String msg, RecognitionException e) {
+				errorCount.incrementAndGet();
+			}
+		});
+		ProtoContext context = parser.proto();
+		assertThat(context).isNotNull();
+		assertThat(errorCount.get()).isEqualTo(1);
+	}
+
 }
