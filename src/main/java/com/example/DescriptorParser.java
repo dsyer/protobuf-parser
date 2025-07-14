@@ -39,14 +39,18 @@ import com.example.ProtobufParser.FieldContext;
 import com.example.ProtobufParser.FieldLabelContext;
 import com.example.ProtobufParser.ImportStatementContext;
 import com.example.ProtobufParser.PackageStatementContext;
+import com.example.ProtobufParser.RpcContext;
+import com.example.ProtobufParser.ServiceDefContext;
 import com.example.ProtobufParser.TypeContext;
 import com.google.protobuf.DescriptorProtos.DescriptorProto;
 import com.google.protobuf.DescriptorProtos.EnumDescriptorProto;
 import com.google.protobuf.DescriptorProtos.EnumValueDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FieldDescriptorProto;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
-import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto.Builder;
+import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
+import com.google.protobuf.DescriptorProtos.MethodDescriptorProto;
+import com.google.protobuf.DescriptorProtos.ServiceDescriptorProto;
 
 public class DescriptorParser {
 
@@ -198,6 +202,7 @@ public class DescriptorParser {
 		});
 		parser.addParseListener(new ProtobufBaseListener() {
 			private String packageName;
+
 			@Override
 			public void exitPackageStatement(PackageStatementContext ctx) {
 				String packageName = ctx.fullIdent().getText();
@@ -205,6 +210,7 @@ public class DescriptorParser {
 					this.packageName = packageName;
 				}
 			}
+
 			@Override
 			public void exitEnumDef(EnumDefContext ctx) {
 				// TODO: bug here if the enum name is re-used in another package
@@ -411,6 +417,35 @@ public class DescriptorParser {
 			}
 			builder.addDependency(path);
 			return super.visitImportStatement(ctx);
+		}
+
+		@Override
+		public Builder visitServiceDef(ServiceDefContext ctx) {
+			String name = ctx.serviceName().getText();
+			ServiceDescriptorProto.Builder service = ServiceDescriptorProto.newBuilder()
+					.setName(name);
+			for (ProtobufParser.ServiceElementContext element : ctx.serviceElement()) {
+				if (element.rpc() != null) {
+					service.addMethod(buildRpc(element.rpc()));
+				}
+			}
+			builder.addService(service.build());
+			return super.visitServiceDef(ctx);
+		}
+
+		private MethodDescriptorProto buildRpc(RpcContext rpc) {
+			String rpcName = rpc.rpcName().getText();
+			MethodDescriptorProto.Builder method = MethodDescriptorProto.newBuilder()
+					.setName(rpcName)
+					.setInputType(rpc.messageType(0).messageName().getText())
+					.setOutputType(rpc.messageType(1).messageName().getText());
+			if (rpc.STREAM(0) != null) {
+				method.setServerStreaming(true);
+			}
+			if (rpc.STREAM(1) != null) {
+				method.setClientStreaming(true);
+			}
+			return method.build();
 		}
 
 	}
