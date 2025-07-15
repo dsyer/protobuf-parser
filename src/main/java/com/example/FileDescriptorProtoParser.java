@@ -52,6 +52,63 @@ import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 import com.google.protobuf.DescriptorProtos.MethodDescriptorProto;
 import com.google.protobuf.DescriptorProtos.ServiceDescriptorProto;
 
+/**
+ * A parser for Protocol Buffers (.proto) files that can parse, resolve
+ * dependencies,
+ * and build {@link FileDescriptorProto} and {@link FileDescriptorSet} objects.
+ * 
+ * <p>
+ * This provides methods to parse Protocol Buffers definitions from strings,
+ * input streams, and file paths. It also resolves dependencies between .proto
+ * files
+ * and builds a complete {@link FileDescriptorSet} that includes all required
+ * files.
+ * 
+ * <p>
+ * Features:
+ * <ul>
+ * <li>Parses .proto files into {@link FileDescriptorProto} objects.</li>
+ * <li>Resolves dependencies between .proto files.</li>
+ * <li>Supports parsing from strings, input streams, and file paths.</li>
+ * <li>Handles imports and package definitions in .proto files.</li>
+ * <li>Maintains a cache of parsed files to avoid redundant parsing.</li>
+ * </ul>
+ * 
+ * <p>
+ * Usage:
+ * 
+ * <pre>
+ * {@code
+ * FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
+ * FileDescriptorSet descriptorSet = parser.resolve(Paths.get("example.proto"));
+ * }
+ * </pre>
+ * 
+ * <p>
+ * Note: This parser assumes the use of the "proto3" syntax and does not
+ * support "proto2".
+ * 
+ * <p>
+ * Thread Safety: This class is not thread-safe. If multiple threads need to use
+ * the parser, external synchronization is required.
+ * 
+ * <p>
+ * Limitations: Assumes all imports are either available in the classpath or in
+ * the specified base path.
+ * 
+ * <p>
+ * Example:
+ * 
+ * <pre>
+ * {@code
+ * Path basePath = Paths.get("/path/to/protos");
+ * FileDescriptorProtoParser parser = new FileDescriptorProtoParser(basePath);
+ * FileDescriptorSet descriptorSet = parser.resolve("example.proto");
+ * }
+ * </pre>
+ * 
+ * @author Dave Syer
+ */
 public class FileDescriptorProtoParser {
 
 	private Map<String, FileDescriptorProto> cache = new HashMap<>();
@@ -60,19 +117,53 @@ public class FileDescriptorProtoParser {
 
 	private final Path base;
 
+	/**
+	 * Constructs a new {@code FileDescriptorProtoParser} with a default path.
+	 * This constructor initializes the parser with an empty path.
+	 */
 	public FileDescriptorProtoParser() {
 		this(Path.of(""));
 	}
 
+	/**
+	 * Constructs a new {@code FileDescriptorProtoParser} with the specified base
+	 * path.
+	 * Imports in .proto files will be resolved relative to this base path and paths
+	 * to .proto files will be resolved relative to this base path as well.
+	 *
+	 * @param base the base path to be used by the parser
+	 */
 	public FileDescriptorProtoParser(Path base) {
 		this.base = base;
 	}
 
+	/**
+	 * Parses the given input string into a FileDescriptorProto object.
+	 * 
+	 * @see #resolve(String, String) for resolving dependencies
+	 *
+	 * @param name  the name associated with the input, typically used for error
+	 *              reporting
+	 * @param input the input string to be parsed, must be a single "proto3"
+	 *              definition
+	 * @return a FileDescriptorProto object representing the parsed input
+	 */
 	public FileDescriptorProto parse(String name, String input) {
 		CharStream stream = CharStreams.fromString(input);
 		return parse(name, stream);
 	}
 
+	/**
+	 * Parses a protocol buffer descriptor from the given input stream.
+	 *
+	 * @see #resolve(String, InputStream) for resolving dependencies
+	 *
+	 * @param name  the name associated with the descriptor being parsed
+	 * @param input the input stream containing the protocol buffer descriptor data
+	 * @return the parsed {@link FileDescriptorProto} object
+	 * @throws IllegalStateException if an I/O error occurs while reading the input
+	 *                               stream
+	 */
 	public FileDescriptorProto parse(String name, InputStream input) {
 		try {
 			return parse(name, CharStreams.fromStream(input));
@@ -81,11 +172,81 @@ public class FileDescriptorProtoParser {
 		}
 	}
 
+	/**
+	 * Resolves a set of {@link FileDescriptorProto} inputs into a
+	 * {@link FileDescriptorSet}.
+	 * This method processes each input, ensuring that all dependencies are resolved
+	 * and
+	 * added to the resulting {@link FileDescriptorSet}.
+	 *
+	 * @param inputs an array of {@link FileDescriptorProto} objects to be resolved
+	 * @return a {@link FileDescriptorSet} containing the resolved descriptors
+	 */
 	public FileDescriptorSet resolve(FileDescriptorProto... inputs) {
 		FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();
 		Set<String> names = new HashSet<>();
 		for (FileDescriptorProto input : inputs) {
 			resolve(builder, input, names);
+		}
+		return builder.build();
+	}
+
+	/**
+	 * Resolves a {@link FileDescriptorSet} from the given input stream.
+	 * Dependencies are resolved from the classpath or relative to the base path.
+	 *
+	 * @param name  the name associated with the input stream, used for parsing.
+	 * @param input the input stream containing the data to be parsed.
+	 * @return a {@link FileDescriptorSet} resolved from the parsed
+	 *         {@link FileDescriptorProto}.
+	 * @throws IllegalStateException if an I/O error occurs while reading the input
+	 *                               stream.
+	 */
+	public FileDescriptorSet resolve(String name, InputStream input) {
+		try {
+			FileDescriptorProto proto = parse(name, CharStreams.fromStream(input));
+			return resolve(proto);
+		} catch (IOException e) {
+			throw new IllegalStateException("Failed to read input stream: " + input, e);
+		}
+	}
+
+	/**
+	 * Resolves a {@link FileDescriptorSet} from the given input string. The input
+	 * is a single
+	 * .proto files in "proto3" syntax, but if it contains imports, those will be
+	 * resolved.
+	 * Dependencies are resolved from the classpath or relative to the base path.
+	 *
+	 * @param name  the name associated with the input, typically used for error
+	 *              reporting
+	 * @param input the input string containing the protocol buffer definition
+	 * @return a {@link FileDescriptorSet} representing the resolved protocol buffer
+	 *         definitions
+	 */
+	public FileDescriptorSet resolve(String name, String input) {
+		CharStream stream = CharStreams.fromString(input);
+		FileDescriptorProto proto = parse(name, stream);
+		return resolve(proto);
+	}
+
+	/**
+	 * Resolves the provided input paths into a {@link FileDescriptorSet}.
+	 * This method parses each input path, relative to the base path, extracts the
+	 * file descriptors, and aggregates them into a single
+	 * {@link FileDescriptorSet}.
+	 *
+	 * Dependencies are resolved from the classpath or relative to the base path.
+	 * 
+	 * @param inputs an array of {@link Path} objects representing the input files
+	 *               to parse
+	 * @return a {@link FileDescriptorSet} containing all the file descriptors from
+	 *         the provided inputs
+	 */
+	public FileDescriptorSet resolve(Path... inputs) {
+		FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();
+		for (Path input : inputs) {
+			parse(input).getFileList().forEach(builder::addFile);
 		}
 		return builder.build();
 	}
@@ -112,14 +273,6 @@ public class FileDescriptorProtoParser {
 		}
 		builder.addFile(proto);
 		names.add(proto.getName());
-	}
-
-	public FileDescriptorSet parse(Path... inputs) {
-		FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();
-		for (Path input : inputs) {
-			parse(input).getFileList().forEach(builder::addFile);
-		}
-		return builder.build();
 	}
 
 	private FileDescriptorSet parse(Path path) {

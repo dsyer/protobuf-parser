@@ -31,7 +31,7 @@ public class FileSystemDescriptorTests {
 	@Test
 	public void testDescriptorWithImportsFromBasepath() {
 		FileDescriptorProtoParser parser = new FileDescriptorProtoParser(Path.of("src/test/proto/deps"));
-		FileDescriptorSet files = parser.parse(Path.of("foo.proto"));
+		FileDescriptorSet files = parser.resolve(Path.of("foo.proto"));
 		assertThat(files.getFileCount()).isEqualTo(2);
 		FileDescriptorProto proto = files.getFile(0);
 		assertThat(proto.getName()).isEqualTo("bar.proto");
@@ -45,7 +45,7 @@ public class FileSystemDescriptorTests {
 	@Test
 	public void testDescriptorWithImportedEnum() {
 		FileDescriptorProtoParser parser = new FileDescriptorProtoParser(Path.of("src/test/proto/enums"));
-		FileDescriptorSet files = parser.parse(Path.of("foo.proto"));
+		FileDescriptorSet files = parser.resolve(Path.of("foo.proto"));
 		assertThat(files.getFileCount()).isEqualTo(2);
 		FileDescriptorProto proto = files.getFile(0);
 		assertThat(proto.getName()).isEqualTo("bar.proto");
@@ -64,7 +64,7 @@ public class FileSystemDescriptorTests {
 	@Test
 	public void testDescriptorWithImportedEnumWithPackage() {
 		FileDescriptorProtoParser parser = new FileDescriptorProtoParser(Path.of("src/test/proto/pkgs"));
-		FileDescriptorSet files = parser.parse(Path.of("foo.proto"));
+		FileDescriptorSet files = parser.resolve(Path.of("foo.proto"));
 		assertThat(files.getFileCount()).isEqualTo(2);
 		FileDescriptorProto proto = files.getFile(0);
 		assertThat(proto.getName()).isEqualTo("bar.proto");
@@ -84,7 +84,7 @@ public class FileSystemDescriptorTests {
 	@Test
 	public void testMultiDescriptor() {
 		FileDescriptorProtoParser parser = new FileDescriptorProtoParser(Path.of("src/test/proto/multi"));
-		FileDescriptorSet files = parser.parse(Path.of("foo.proto"), Path.of("bar.proto"));
+		FileDescriptorSet files = parser.resolve(Path.of("foo.proto"), Path.of("bar.proto"));
 		assertThat(files.getFileCount()).isEqualTo(2);
 		FileDescriptorProto proto = files.getFile(0);
 		assertThat(proto.getName()).isEqualTo("foo.proto");
@@ -97,7 +97,7 @@ public class FileSystemDescriptorTests {
 	@Test
 	public void testMultiDescriptorScan() {
 		FileDescriptorProtoParser parser = new FileDescriptorProtoParser(Path.of("src/test/proto/multi"));
-		FileDescriptorSet files = parser.parse(Path.of("."));
+		FileDescriptorSet files = parser.resolve(Path.of("."));
 		assertThat(files.getFileCount()).isEqualTo(2);
 		files.getFileList().forEach(file -> {
 			assertThat(file.getName()).isIn("foo.proto", "bar.proto");
@@ -108,7 +108,7 @@ public class FileSystemDescriptorTests {
 	@Test
 	public void testMultiDescriptorScanIncludingImports() {
 		FileDescriptorProtoParser parser = new FileDescriptorProtoParser(Path.of("src/test/proto/deps"));
-		FileDescriptorSet files = parser.parse(Path.of("."));
+		FileDescriptorSet files = parser.resolve(Path.of("."));
 		assertThat(files.getFileCount()).isEqualTo(2);
 		files.getFileList().forEach(file -> {
 			assertThat(file.getName()).isIn("foo.proto", "bar.proto");

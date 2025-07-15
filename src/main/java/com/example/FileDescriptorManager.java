@@ -21,6 +21,17 @@ import com.google.protobuf.Descriptors.DescriptorValidationException;
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.ProtocolStringList;
 
+/**
+ * The {@code FileDescriptorManager} class provides functionality to convert a {@link FileDescriptorProto}
+ * into {@link FileDescriptor} objects. It does not resolves dependencies between file descriptors
+ * within the set.
+ *
+ * <p><strong>Usage:</strong></p>
+ * <pre>
+ * FileDescriptorManager manager = new FileDescriptorManager();
+ * FileDescriptor[] descriptors = manager.convert(fileDescriptorSet);
+ * </pre>
+ */
 public class FileDescriptorManager {
 
 	public FileDescriptor[] convert(FileDescriptorSet input) {
