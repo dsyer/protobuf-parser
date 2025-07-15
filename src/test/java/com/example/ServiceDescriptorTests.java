@@ -38,7 +38,7 @@ public class ServiceDescriptorTests {
 					rpc Echo (Input) returns (Output) {}
 				};
 				""";
-		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
 		FileDescriptorProto proto = parser.parse("test.proto", input);
 		assertThat(proto.getServiceList()).hasSize(1);
 		ServiceDescriptorProto service = proto.getService(0);
@@ -59,7 +59,7 @@ public class ServiceDescriptorTests {
 					rpc Blah (Any) returns (Output) {}
 				};
 				""";
-		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
 		FileDescriptorProto proto = parser.parse("test.proto", input);
 		ServiceDescriptorProto service = proto.getService(0);
 		assertThat(service.getMethodCount()).isEqualTo(2);
@@ -76,7 +76,7 @@ public class ServiceDescriptorTests {
 					rpc Echo (Input) returns (stream Output) {}
 				};
 				""";
-		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
 		FileDescriptorProto proto = parser.parse("test.proto", input);
 		ServiceDescriptorProto service = proto.getService(0);
 		assertThat(service.getMethodList()).hasSize(1);

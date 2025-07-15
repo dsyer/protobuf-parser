@@ -52,7 +52,7 @@ import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 import com.google.protobuf.DescriptorProtos.MethodDescriptorProto;
 import com.google.protobuf.DescriptorProtos.ServiceDescriptorProto;
 
-public class DescriptorParser {
+public class FileDescriptorProtoParser {
 
 	private Map<String, FileDescriptorProto> cache = new HashMap<>();
 
@@ -60,11 +60,11 @@ public class DescriptorParser {
 
 	private final Path base;
 
-	public DescriptorParser() {
+	public FileDescriptorProtoParser() {
 		this(Path.of(""));
 	}
 
-	public DescriptorParser(Path base) {
+	public FileDescriptorProtoParser(Path base) {
 		this.base = base;
 	}
 
@@ -363,7 +363,7 @@ public class DescriptorParser {
 				return FieldDescriptorProto.Type.TYPE_SINT64;
 			}
 			if (ctx.messageType() != null) {
-				if (DescriptorParser.this.enumNames.contains(ctx.messageType().getText())) {
+				if (FileDescriptorProtoParser.this.enumNames.contains(ctx.messageType().getText())) {
 					return FieldDescriptorProto.Type.TYPE_ENUM;
 				}
 				return FieldDescriptorProto.Type.TYPE_MESSAGE;

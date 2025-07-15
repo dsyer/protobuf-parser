@@ -28,7 +28,7 @@ public class ClasspathDescriptorTests {
 
 	@Test
 	public void testClasspathDescriptor() {
-		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
 		// Comes with the protobuf-java library:
 		FileDescriptorProto proto = parser.parse("descriptor.proto",
 				getClass().getResourceAsStream("/google/protobuf/empty.proto"));
@@ -40,7 +40,7 @@ public class ClasspathDescriptorTests {
 
 	@Test
 	public void testDescriptorFromClasspath() {
-		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
 		// Comes with the protobuf-java library:
 		FileDescriptorProto proto = parser.parse(Path.of("google/protobuf/empty.proto")).getFile(0);
 		assertThat(proto.getName()).isEqualTo("google/protobuf/empty.proto");
@@ -51,7 +51,7 @@ public class ClasspathDescriptorTests {
 
 	@Test
 	public void testDescriptorWithImportsFromClasspath() {
-		DescriptorParser parser = new DescriptorParser();
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
 		// Comes with the protobuf-java library:
 		FileDescriptorSet files = parser.parse(Path.of("google/protobuf/type.proto"));
 		assertThat(files.getFileCount()).isEqualTo(3);
