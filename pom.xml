@@ -29,6 +29,7 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<spring-javaformat-maven-plugin.version>0.0.43</spring-javaformat-maven-plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -64,6 +65,23 @@
 						<configuration>
 							<visitor>true</visitor>
 						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>io.spring.javaformat</groupId>
+				<artifactId>spring-javaformat-maven-plugin</artifactId>
+				<version>${spring-javaformat-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<inherited>true</inherited>
+						<configuration>
+							<skip>${disable.format.checks}</skip>
+						</configuration>
+						<goals>
+							<goal>validate</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>

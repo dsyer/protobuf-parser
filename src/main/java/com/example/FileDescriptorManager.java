@@ -22,11 +22,13 @@ import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.ProtocolStringList;
 
 /**
- * The {@code FileDescriptorManager} class provides functionality to convert a {@link FileDescriptorProto}
- * into {@link FileDescriptor} objects. It does not resolves dependencies between file descriptors
- * within the set.
+ * The {@code FileDescriptorManager} class provides functionality to convert a
+ * {@link FileDescriptorProto} into {@link FileDescriptor} objects. It does not resolves
+ * dependencies between file descriptors within the set.
  *
- * <p><strong>Usage:</strong></p>
+ * <p>
+ * <strong>Usage:</strong>
+ * </p>
  * <pre>
  * FileDescriptorManager manager = new FileDescriptorManager();
  * FileDescriptor[] descriptors = manager.convert(fileDescriptorSet);
@@ -39,10 +41,10 @@ public class FileDescriptorManager {
 		for (int i = 0; i < input.getFileCount(); i++) {
 			try {
 				FileDescriptorProto file = input.getFile(i);
-				FileDescriptor fd = FileDescriptor.buildFrom(file,
-						dependencies(input, file.getDependencyList()));
+				FileDescriptor fd = FileDescriptor.buildFrom(file, dependencies(input, file.getDependencyList()));
 				output[i] = fd;
-			} catch (DescriptorValidationException e) {
+			}
+			catch (DescriptorValidationException e) {
 				throw new IllegalStateException("Invalid descriptor: " + input.getFile(i).getName(), e);
 			}
 		}
@@ -59,7 +61,8 @@ public class FileDescriptorManager {
 			}
 			try {
 				deps[i] = FileDescriptor.buildFrom(file, dependencies(input, file.getDependencyList()));
-			} catch (DescriptorValidationException e) {
+			}
+			catch (DescriptorValidationException e) {
 				throw new IllegalStateException("Invalid descriptor: " + file.getName(), e);
 			}
 		}

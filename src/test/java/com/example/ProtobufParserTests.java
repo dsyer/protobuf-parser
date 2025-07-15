@@ -30,6 +30,7 @@ import com.example.ProtobufParser.MessageBodyContext;
 import com.example.ProtobufParser.ProtoContext;
 
 public class ProtobufParserTests {
+
 	@Test
 	public void testMessageParsing() {
 		String input = """
@@ -49,8 +50,8 @@ public class ProtobufParserTests {
 				new CommonTokenStream(new ProtobufLexer(CharStreams.fromString(input))));
 		parser.addErrorListener(new BaseErrorListener() {
 			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-					int line, int charPositionInLine, String msg, RecognitionException e) {
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+					int charPositionInLine, String msg, RecognitionException e) {
 				errorCount.incrementAndGet();
 			}
 		});
@@ -61,6 +62,7 @@ public class ProtobufParserTests {
 				System.err.println("Message: " + ctx.messageName().getText());
 				return super.visitMessageDef(ctx);
 			}
+
 			@Override
 			public Object visitMessageBody(MessageBodyContext ctx) {
 				System.err.println("Field: " + ctx.messageElement().get(0).field().fieldName().getText());
@@ -83,8 +85,8 @@ public class ProtobufParserTests {
 		AtomicInteger errorCount = new AtomicInteger(0);
 		parser.addErrorListener(new BaseErrorListener() {
 			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-					int line, int charPositionInLine, String msg, RecognitionException e) {
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+					int charPositionInLine, String msg, RecognitionException e) {
 				errorCount.incrementAndGet();
 			}
 		});
@@ -106,8 +108,8 @@ public class ProtobufParserTests {
 		AtomicInteger errorCount = new AtomicInteger(0);
 		parser.addErrorListener(new BaseErrorListener() {
 			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-					int line, int charPositionInLine, String msg, RecognitionException e) {
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+					int charPositionInLine, String msg, RecognitionException e) {
 				errorCount.incrementAndGet();
 			}
 		});

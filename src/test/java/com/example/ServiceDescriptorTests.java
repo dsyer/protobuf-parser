@@ -86,4 +86,5 @@ public class ServiceDescriptorTests {
 		assertThat(service.getMethod(0).getClientStreaming()).isFalse();
 		assertThat(service.getMethod(0).getServerStreaming()).isTrue();
 	}
+
 }

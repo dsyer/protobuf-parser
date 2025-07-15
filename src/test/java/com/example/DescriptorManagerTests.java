@@ -65,7 +65,7 @@ public class DescriptorManagerTests {
 		FileDescriptor descriptor = descriptors[0];
 		assertThat(descriptor.getName()).isEqualTo("test.proto");
 		assertThat(descriptor.findServiceByName("Foo").findMethodByName("Echo").getInputType().getName())
-				.isEqualTo("Input");
+			.isEqualTo("Input");
 	}
 
 	@Test
@@ -79,13 +79,10 @@ public class DescriptorManagerTests {
 				""";
 		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
 		FileDescriptorProto proto = parser.parse("test.proto", input);
-		FileDescriptorSet files = FileDescriptorSet.newBuilder()
-				.addFile(proto)
-				.build();
-		assertThat(
-				assertThrows(IllegalStateException.class, () -> {
-					new FileDescriptorManager().convert(files);
-				}).getMessage()).contains("Missing dependency: google/protobuf/any.proto");
+		FileDescriptorSet files = FileDescriptorSet.newBuilder().addFile(proto).build();
+		assertThat(assertThrows(IllegalStateException.class, () -> {
+			new FileDescriptorManager().convert(files);
+		}).getMessage()).contains("Missing dependency: google/protobuf/any.proto");
 	}
 
 }

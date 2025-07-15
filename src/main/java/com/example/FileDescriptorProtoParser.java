@@ -53,17 +53,14 @@ import com.google.protobuf.DescriptorProtos.MethodDescriptorProto;
 import com.google.protobuf.DescriptorProtos.ServiceDescriptorProto;
 
 /**
- * A parser for Protocol Buffers (.proto) files that can parse, resolve
- * dependencies,
- * and build {@link FileDescriptorProto} and {@link FileDescriptorSet} objects.
- * 
+ * A parser for Protocol Buffers (.proto) files that can parse, resolve dependencies, and
+ * build {@link FileDescriptorProto} and {@link FileDescriptorSet} objects.
+ *
  * <p>
- * This provides methods to parse Protocol Buffers definitions from strings,
- * input streams, and file paths. It also resolves dependencies between .proto
- * files
- * and builds a complete {@link FileDescriptorSet} that includes all required
- * files.
- * 
+ * This provides methods to parse Protocol Buffers definitions from strings, input
+ * streams, and file paths. It also resolves dependencies between .proto files and builds
+ * a complete {@link FileDescriptorSet} that includes all required files.
+ *
  * <p>
  * Features:
  * <ul>
@@ -73,32 +70,31 @@ import com.google.protobuf.DescriptorProtos.ServiceDescriptorProto;
  * <li>Handles imports and package definitions in .proto files.</li>
  * <li>Maintains a cache of parsed files to avoid redundant parsing.</li>
  * </ul>
- * 
+ *
  * <p>
  * Usage:
- * 
+ *
  * <pre>
  * {@code
  * FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
  * FileDescriptorSet descriptorSet = parser.resolve(Paths.get("example.proto"));
  * }
  * </pre>
- * 
+ *
  * <p>
- * Note: This parser assumes the use of the "proto3" syntax and does not
- * support "proto2".
- * 
+ * Note: This parser assumes the use of the "proto3" syntax and does not support "proto2".
+ *
  * <p>
- * Thread Safety: This class is not thread-safe. If multiple threads need to use
- * the parser, external synchronization is required.
- * 
+ * Thread Safety: This class is not thread-safe. If multiple threads need to use the
+ * parser, external synchronization is required.
+ *
  * <p>
- * Limitations: Assumes all imports are either available in the classpath or in
- * the specified base path.
- * 
+ * Limitations: Assumes all imports are either available in the classpath or in the
+ * specified base path.
+ *
  * <p>
  * Example:
- * 
+ *
  * <pre>
  * {@code
  * Path basePath = Paths.get("/path/to/protos");
@@ -106,7 +102,7 @@ import com.google.protobuf.DescriptorProtos.ServiceDescriptorProto;
  * FileDescriptorSet descriptorSet = parser.resolve("example.proto");
  * }
  * </pre>
- * 
+ *
  * @author Dave Syer
  */
 public class FileDescriptorProtoParser {
@@ -118,19 +114,17 @@ public class FileDescriptorProtoParser {
 	private final Path base;
 
 	/**
-	 * Constructs a new {@code FileDescriptorProtoParser} with a default path.
-	 * This constructor initializes the parser with an empty path.
+	 * Constructs a new {@code FileDescriptorProtoParser} with a default path. This
+	 * constructor initializes the parser with an empty path.
 	 */
 	public FileDescriptorProtoParser() {
 		this(Path.of(""));
 	}
 
 	/**
-	 * Constructs a new {@code FileDescriptorProtoParser} with the specified base
-	 * path.
-	 * Imports in .proto files will be resolved relative to this base path and paths
-	 * to .proto files will be resolved relative to this base path as well.
-	 *
+	 * Constructs a new {@code FileDescriptorProtoParser} with the specified base path.
+	 * Imports in .proto files will be resolved relative to this base path and paths to
+	 * .proto files will be resolved relative to this base path as well.
 	 * @param base the base path to be used by the parser
 	 */
 	public FileDescriptorProtoParser(Path base) {
@@ -139,13 +133,10 @@ public class FileDescriptorProtoParser {
 
 	/**
 	 * Parses the given input string into a FileDescriptorProto object.
-	 * 
-	 * @see #resolve(String, String) for resolving dependencies
 	 *
-	 * @param name  the name associated with the input, typically used for error
-	 *              reporting
-	 * @param input the input string to be parsed, must be a single "proto3"
-	 *              definition
+	 * @see #resolve(String, String) for resolving dependencies
+	 * @param name the name associated with the input, typically used for error reporting
+	 * @param input the input string to be parsed, must be a single "proto3" definition
 	 * @return a FileDescriptorProto object representing the parsed input
 	 */
 	public FileDescriptorProto parse(String name, String input) {
@@ -157,28 +148,24 @@ public class FileDescriptorProtoParser {
 	 * Parses a protocol buffer descriptor from the given input stream.
 	 *
 	 * @see #resolve(String, InputStream) for resolving dependencies
-	 *
-	 * @param name  the name associated with the descriptor being parsed
+	 * @param name the name associated with the descriptor being parsed
 	 * @param input the input stream containing the protocol buffer descriptor data
 	 * @return the parsed {@link FileDescriptorProto} object
-	 * @throws IllegalStateException if an I/O error occurs while reading the input
-	 *                               stream
+	 * @throws IllegalStateException if an I/O error occurs while reading the input stream
 	 */
 	public FileDescriptorProto parse(String name, InputStream input) {
 		try {
 			return parse(name, CharStreams.fromStream(input));
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new IllegalStateException("Failed to read input stream: " + input, e);
 		}
 	}
 
 	/**
 	 * Resolves a set of {@link FileDescriptorProto} inputs into a
-	 * {@link FileDescriptorSet}.
-	 * This method processes each input, ensuring that all dependencies are resolved
-	 * and
-	 * added to the resulting {@link FileDescriptorSet}.
-	 *
+	 * {@link FileDescriptorSet}. This method processes each input, ensuring that all
+	 * dependencies are resolved and added to the resulting {@link FileDescriptorSet}.
 	 * @param inputs an array of {@link FileDescriptorProto} objects to be resolved
 	 * @return a {@link FileDescriptorSet} containing the resolved descriptors
 	 */
@@ -192,37 +179,34 @@ public class FileDescriptorProtoParser {
 	}
 
 	/**
-	 * Resolves a {@link FileDescriptorSet} from the given input stream.
-	 * Dependencies are resolved from the classpath or relative to the base path.
-	 *
-	 * @param name  the name associated with the input stream, used for parsing.
+	 * Resolves a {@link FileDescriptorSet} from the given input stream. Dependencies are
+	 * resolved from the classpath or relative to the base path.
+	 * @param name the name associated with the input stream, used for parsing.
 	 * @param input the input stream containing the data to be parsed.
 	 * @return a {@link FileDescriptorSet} resolved from the parsed
-	 *         {@link FileDescriptorProto}.
+	 * {@link FileDescriptorProto}.
 	 * @throws IllegalStateException if an I/O error occurs while reading the input
-	 *                               stream.
+	 * stream.
 	 */
 	public FileDescriptorSet resolve(String name, InputStream input) {
 		try {
 			FileDescriptorProto proto = parse(name, CharStreams.fromStream(input));
 			return resolve(proto);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new IllegalStateException("Failed to read input stream: " + input, e);
 		}
 	}
 
 	/**
-	 * Resolves a {@link FileDescriptorSet} from the given input string. The input
-	 * is a single
-	 * .proto files in "proto3" syntax, but if it contains imports, those will be
-	 * resolved.
-	 * Dependencies are resolved from the classpath or relative to the base path.
-	 *
-	 * @param name  the name associated with the input, typically used for error
-	 *              reporting
+	 * Resolves a {@link FileDescriptorSet} from the given input string. The input is a
+	 * single .proto files in "proto3" syntax, but if it contains imports, those will be
+	 * resolved. Dependencies are resolved from the classpath or relative to the base
+	 * path.
+	 * @param name the name associated with the input, typically used for error reporting
 	 * @param input the input string containing the protocol buffer definition
 	 * @return a {@link FileDescriptorSet} representing the resolved protocol buffer
-	 *         definitions
+	 * definitions
 	 */
 	public FileDescriptorSet resolve(String name, String input) {
 		CharStream stream = CharStreams.fromString(input);
@@ -231,17 +215,15 @@ public class FileDescriptorProtoParser {
 	}
 
 	/**
-	 * Resolves the provided input paths into a {@link FileDescriptorSet}.
-	 * This method parses each input path, relative to the base path, extracts the
-	 * file descriptors, and aggregates them into a single
-	 * {@link FileDescriptorSet}.
+	 * Resolves the provided input paths into a {@link FileDescriptorSet}. This method
+	 * parses each input path, relative to the base path, extracts the file descriptors,
+	 * and aggregates them into a single {@link FileDescriptorSet}.
 	 *
 	 * Dependencies are resolved from the classpath or relative to the base path.
-	 * 
-	 * @param inputs an array of {@link Path} objects representing the input files
-	 *               to parse
-	 * @return a {@link FileDescriptorSet} containing all the file descriptors from
-	 *         the provided inputs
+	 * @param inputs an array of {@link Path} objects representing the input files to
+	 * parse
+	 * @return a {@link FileDescriptorSet} containing all the file descriptors from the
+	 * provided inputs
 	 */
 	public FileDescriptorSet resolve(Path... inputs) {
 		FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();
@@ -262,10 +244,12 @@ public class FileDescriptorProtoParser {
 			FileDescriptorProto dependency;
 			if (cache.containsKey(name)) {
 				dependency = cache.get(name);
-			} else {
+			}
+			else {
 				try (InputStream stream = findImport(name)) {
 					dependency = parse(name, CharStreams.fromStream(stream));
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					throw new IllegalStateException("Failed to read import: " + name, e);
 				}
 			}
@@ -286,7 +270,8 @@ public class FileDescriptorProtoParser {
 				try {
 					FileDescriptorProto proto = parse(path.toString(), CharStreams.fromStream(resource));
 					return resolve(proto);
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					throw new IllegalStateException("Failed to read resource: " + path, e);
 				}
 			}
@@ -303,22 +288,23 @@ public class FileDescriptorProtoParser {
 			Set<String> names = new HashSet<>();
 			if (input.toFile().isDirectory()) {
 				Files.walk(input)
-						.filter(file -> !Files.isDirectory(file) && file.toString().endsWith(".proto"))
-						.forEach(file -> {
-							try {
-								Path name = base.relativize(file.normalize());
-								FileDescriptorProto proto = parse(name.toString(), CharStreams.fromPath(file));
-								for (FileDescriptorProto resolved : resolve(proto).getFileList()) {
-									if (!names.contains(resolved.getName())) {
-										// Avoid duplicates
-										builder.addFile(resolved);
-										names.add(resolved.getName());
-									}
+					.filter(file -> !Files.isDirectory(file) && file.toString().endsWith(".proto"))
+					.forEach(file -> {
+						try {
+							Path name = base.relativize(file.normalize());
+							FileDescriptorProto proto = parse(name.toString(), CharStreams.fromPath(file));
+							for (FileDescriptorProto resolved : resolve(proto).getFileList()) {
+								if (!names.contains(resolved.getName())) {
+									// Avoid duplicates
+									builder.addFile(resolved);
+									names.add(resolved.getName());
 								}
-							} catch (IOException e) {
-								throw new IllegalStateException("Failed to read file: " + file, e);
 							}
-						});
+						}
+						catch (IOException e) {
+							throw new IllegalStateException("Failed to read file: " + file, e);
+						}
+					});
 				return builder.build();
 			}
 			FileDescriptorProto proto = parse(path.toString(), CharStreams.fromPath(input));
@@ -326,7 +312,8 @@ public class FileDescriptorProtoParser {
 				builder.addFile(resolved);
 			}
 			return builder.build();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			throw new IllegalStateException("Failed to read input file: " + input, e);
 		}
 	}
@@ -348,8 +335,8 @@ public class FileDescriptorProtoParser {
 		parser.removeErrorListeners(); // Remove default error listeners
 		parser.addErrorListener(new BaseErrorListener() {
 			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-					int line, int charPositionInLine, String msg, RecognitionException e) {
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
+					int charPositionInLine, String msg, RecognitionException e) {
 				throw new IllegalStateException("Syntax error at line " + line + ": " + msg, e);
 			}
 		});
@@ -400,10 +387,12 @@ public class FileDescriptorProtoParser {
 			if (base.resolve(path).toFile().exists()) {
 				try {
 					stream = Files.newInputStream(base.resolve(path));
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 					throw new IllegalStateException("Failed to read import: " + path, e);
 				}
-			} else {
+			}
+			else {
 				throw new IllegalArgumentException("Import not found: " + path);
 			}
 		}
@@ -411,9 +400,13 @@ public class FileDescriptorProtoParser {
 	}
 
 	class ProtobufDescriptorVisitor extends ProtobufBaseVisitor<FileDescriptorProto.Builder> {
+
 		private final FileDescriptorProto.Builder builder;
+
 		private Stack<DescriptorProto.Builder> type = new Stack<>();
+
 		private Stack<EnumDescriptorProto.Builder> enumType = new Stack<>();
+
 		private Stack<FieldDescriptorProto.Builder> field = new Stack<>();
 
 		public ProtobufDescriptorVisitor(FileDescriptorProto.Builder builder) {
@@ -455,9 +448,9 @@ public class FileDescriptorProtoParser {
 			// TODO: handle field options if needed
 			FieldDescriptorProto.Type fieldType = findType(ctx.type());
 			FieldDescriptorProto.Builder field = FieldDescriptorProto.newBuilder()
-					.setName(ctx.fieldName().getText())
-					.setNumber(Integer.valueOf(ctx.fieldNumber().getText()))
-					.setType(fieldType);
+				.setName(ctx.fieldName().getText())
+				.setNumber(Integer.valueOf(ctx.fieldNumber().getText()))
+				.setType(fieldType);
 			this.field.push(field);
 			if (fieldType == FieldDescriptorProto.Type.TYPE_MESSAGE
 					|| fieldType == FieldDescriptorProto.Type.TYPE_ENUM) {
@@ -530,8 +523,7 @@ public class FileDescriptorProtoParser {
 
 		@Override
 		public FileDescriptorProto.Builder visitEnumDef(EnumDefContext ctx) {
-			EnumDescriptorProto.Builder enumType = EnumDescriptorProto.newBuilder()
-					.setName(ctx.enumName().getText());
+			EnumDescriptorProto.Builder enumType = EnumDescriptorProto.newBuilder().setName(ctx.enumName().getText());
 			this.enumType.push(enumType);
 			FileDescriptorProto.Builder result = super.visitEnumDef(ctx);
 			builder.addEnumType(enumType.build());
@@ -543,8 +535,8 @@ public class FileDescriptorProtoParser {
 		public FileDescriptorProto.Builder visitEnumField(EnumFieldContext ctx) {
 			// System.err.println("Enum field: " + ctx.enumFieldName().getText());
 			EnumValueDescriptorProto.Builder field = EnumValueDescriptorProto.newBuilder()
-					.setName(ctx.ident().IDENTIFIER().getText())
-					.setNumber(Integer.valueOf(ctx.intLit().INT_LIT().getText()));
+				.setName(ctx.ident().IDENTIFIER().getText())
+				.setNumber(Integer.valueOf(ctx.intLit().INT_LIT().getText()));
 			this.enumType.peek().addValue(field.build());
 			return super.visitEnumField(ctx);
 		}
@@ -552,8 +544,7 @@ public class FileDescriptorProtoParser {
 		@Override
 		public FileDescriptorProto.Builder visitMessageDef(ProtobufParser.MessageDefContext ctx) {
 			// System.err.println("Message: " + ctx.messageName().getText());
-			DescriptorProto.Builder type = DescriptorProto.newBuilder()
-					.setName(ctx.messageName().getText());
+			DescriptorProto.Builder type = DescriptorProto.newBuilder().setName(ctx.messageName().getText());
 			this.type.push(type);
 			FileDescriptorProto.Builder result = super.visitMessageDef(ctx);
 			builder.addMessageType(type);
@@ -575,8 +566,7 @@ public class FileDescriptorProtoParser {
 		@Override
 		public Builder visitServiceDef(ServiceDefContext ctx) {
 			String name = ctx.serviceName().getText();
-			ServiceDescriptorProto.Builder service = ServiceDescriptorProto.newBuilder()
-					.setName(name);
+			ServiceDescriptorProto.Builder service = ServiceDescriptorProto.newBuilder().setName(name);
 			for (ProtobufParser.ServiceElementContext element : ctx.serviceElement()) {
 				if (element.rpc() != null) {
 					service.addMethod(buildRpc(element.rpc()));
@@ -589,9 +579,9 @@ public class FileDescriptorProtoParser {
 		private MethodDescriptorProto buildRpc(RpcContext rpc) {
 			String rpcName = rpc.rpcName().getText();
 			MethodDescriptorProto.Builder method = MethodDescriptorProto.newBuilder()
-					.setName(rpcName)
-					.setInputType(rpc.messageType(0).messageName().getText())
-					.setOutputType(rpc.messageType(1).messageName().getText());
+				.setName(rpcName)
+				.setInputType(rpc.messageType(0).messageName().getText())
+				.setOutputType(rpc.messageType(1).messageName().getText());
 			if (rpc.STREAM(0) != null) {
 				method.setServerStreaming(true);
 			}

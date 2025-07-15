@@ -167,44 +167,44 @@ public class DescriptorParserTests {
 	@Test
 	@Disabled
 	public void testParseTrickyOptions() {
-		String input = 	"""
-			syntax = "proto3";
-			package statustest;
+		String input = """
+				syntax = "proto3";
+				package statustest;
 
-			import "envoyproxy/protoc-gen-validate/validate/validate.proto";
-			import "google/rpc/status.proto";
+				import "envoyproxy/protoc-gen-validate/validate/validate.proto";
+				import "google/rpc/status.proto";
 
-			package helloworld;
+				package helloworld;
 
-			// The greeter service definition.
-			service Greeter {
-				// Sends a greeting
-				rpc SayHello (HelloRequest) returns (HelloReply) {
-					option (google.api.http) = {
-						post: "/service/hello"
-						body: "*"
-					};
+				// The greeter service definition.
+				service Greeter {
+					// Sends a greeting
+					rpc SayHello (HelloRequest) returns (HelloReply) {
+						option (google.api.http) = {
+							post: "/service/hello"
+							body: "*"
+						};
+					}
 				}
-			}
-			// The request message containing the user's name.
-			message HelloRequest {
-				string name = 1  [(validate.rules).string.pattern = "^\\\\w+( +\\\\w+)*$"]; // Required. Allows multiple words with spaces in between, as it can contain both first and last name;
-			}
+				// The request message containing the user's name.
+				message HelloRequest {
+					string name = 1  [(validate.rules).string.pattern = "^\\\\w+( +\\\\w+)*$"]; // Required. Allows multiple words with spaces in between, as it can contain both first and last name;
+				}
 
-			// The response message containing the greetings
-			message HelloReply {
-				string message = 1;
-				google.rpc.Status status = 2;
-			}
-			""";
-			FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
-			FileDescriptorProto proto = parser.parse("test.proto", input);
-			DescriptorProto type = proto.getMessageTypeList().get(1);
-			assertThat(type.getName().toString()).isEqualTo("HelloReply");
-			assertThat(type.getFieldList()).hasSize(2);
-			assertThat(type.getField(1).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
-			assertThat(type.getField(1).getTypeName()).isEqualTo("google.rpc.Status");
-	}	
+				// The response message containing the greetings
+				message HelloReply {
+					string message = 1;
+					google.rpc.Status status = 2;
+				}
+				""";
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
+		FileDescriptorProto proto = parser.parse("test.proto", input);
+		DescriptorProto type = proto.getMessageTypeList().get(1);
+		assertThat(type.getName().toString()).isEqualTo("HelloReply");
+		assertThat(type.getFieldList()).hasSize(2);
+		assertThat(type.getField(1).getType()).isEqualTo(FieldDescriptorProto.Type.TYPE_MESSAGE);
+		assertThat(type.getField(1).getTypeName()).isEqualTo("google.rpc.Status");
+	}
 
 	@Test
 	public void testParseImport() {
