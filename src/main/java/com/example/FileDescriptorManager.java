@@ -22,8 +22,8 @@ import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.ProtocolStringList;
 
 /**
- * The {@code FileDescriptorManager} class provides functionality to convert a
- * {@link FileDescriptorProto} into {@link FileDescriptor} objects. It does not resolves
+ * The {@code FileDescriptorManager} class provides functionality to convert
+ * {@link FileDescriptorProto} into {@link FileDescriptor} objects. It does not resolve
  * dependencies between file descriptors within the set.
  *
  * <p>
