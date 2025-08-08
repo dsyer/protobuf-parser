@@ -168,6 +168,7 @@ public class FileDescriptorProtoParser {
 	 * dependencies are resolved and added to the resulting {@link FileDescriptorSet}.
 	 * @param inputs an array of {@link FileDescriptorProto} objects to be resolved
 	 * @return a {@link FileDescriptorSet} containing the resolved descriptors
+	 * @throws IllegalArgumentException if the there are unresolved dependencies
 	 */
 	public FileDescriptorSet resolve(FileDescriptorProto... inputs) {
 		FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();
@@ -185,6 +186,8 @@ public class FileDescriptorProtoParser {
 	 * @param input the input stream containing the data to be parsed.
 	 * @return a {@link FileDescriptorSet} resolved from the parsed
 	 * {@link FileDescriptorProto}.
+	 * @throws IllegalArgumentException if the input is not a valid .proto file or if it
+	 * contains unresolved dependencies
 	 * @throws IllegalStateException if an I/O error occurs while reading the input
 	 * stream.
 	 */
@@ -207,6 +210,9 @@ public class FileDescriptorProtoParser {
 	 * @param input the input string containing the protocol buffer definition
 	 * @return a {@link FileDescriptorSet} representing the resolved protocol buffer
 	 * definitions
+	 * @throws IllegalArgumentException if the input is not a valid .proto file or if it
+	 * contains unresolved dependencies
+	 * @throws IllegalStateException if an error occurs during parsing
 	 */
 	public FileDescriptorSet resolve(String name, String input) {
 		CharStream stream = CharStreams.fromString(input);
@@ -224,6 +230,8 @@ public class FileDescriptorProtoParser {
 	 * parse
 	 * @return a {@link FileDescriptorSet} containing all the file descriptors from the
 	 * provided inputs
+	 * @throws IllegalArgumentException if the inputs are not valid .proto files or if they
+	 * contains unresolved dependencies
 	 */
 	public FileDescriptorSet resolve(Path... inputs) {
 		FileDescriptorSet.Builder builder = FileDescriptorSet.newBuilder();

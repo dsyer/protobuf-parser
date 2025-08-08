@@ -45,6 +45,22 @@ public class DescriptorParserTests {
 	}
 
 	@Test
+	public void testMissingDependency() {
+		String input = """
+				syntax = "proto3";
+				message TestMessage {
+					string name = 1;
+					int32 age = 2;
+				}
+				import "missing.proto";
+				""";
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
+		assertThrows(IllegalArgumentException.class, () -> {
+			parser.resolve("test.proto", input);
+		});
+	}
+
+	@Test
 	public void testParseSimpleDescriptor() {
 		String input = """
 				syntax = "proto3";
