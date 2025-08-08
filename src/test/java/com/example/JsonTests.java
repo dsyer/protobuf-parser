@@ -29,6 +29,7 @@ import com.google.protobuf.util.JsonFormat;
 public class JsonTests {
 
 	private FileDescriptor file;
+
 	private Descriptor type;
 
 	@BeforeEach
@@ -49,8 +50,8 @@ public class JsonTests {
 	@Test
 	public void testJsonFormat() throws Exception {
 		DynamicMessage message = DynamicMessage.newBuilder(type)
-				.setField(type.findFieldByName("value"), "test")
-				.build();
+			.setField(type.findFieldByName("value"), "test")
+			.build();
 		String json = JsonFormat.printer().omittingInsignificantWhitespace().print(message);
 		assertThat(json).isEqualTo("{\"value\":\"test\"}");
 	}
