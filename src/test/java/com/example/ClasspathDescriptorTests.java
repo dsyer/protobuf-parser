@@ -60,4 +60,25 @@ public class ClasspathDescriptorTests {
 		assertThat(proto.getMessageTypeList()).hasSize(1);
 	}
 
+	@Test
+	public void testDescriptorFromClasspathDirectory() {
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser();
+		// Comes with the protobuf-java library:
+		FileDescriptorSet files = parser.resolve(Path.of("multi"));
+		assertThat(files.getFileCount()).isEqualTo(2);
+		FileDescriptorProto proto = files.getFile(0);
+		assertThat(proto.getName()).isEqualTo("multi/bar.proto");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+	}
+
+	@Test
+	public void testDescriptorFromClasspathDirectoryAndBasePath() {
+		FileDescriptorProtoParser parser = new FileDescriptorProtoParser(Path.of("multi"));
+		// Comes with the protobuf-java library:
+		FileDescriptorSet files = parser.resolve(Path.of(""));
+		assertThat(files.getFileCount()).isEqualTo(2);
+		FileDescriptorProto proto = files.getFile(0);
+		assertThat(proto.getName()).isEqualTo("bar.proto");
+		assertThat(proto.getMessageTypeList()).hasSize(1);
+	}
 }
