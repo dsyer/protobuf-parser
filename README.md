@@ -1,3 +1,5 @@
+Merged with https://github.com/scratches/grpc-reflect. Follow links from there for updates.
+
 A [Protobuf](https://github.com/protocolbuffers/protobuf) parser generated from an [Antlr](https://github.com/antlr/antlr4) grammar. Originally based on the sample grammar at https://github.com/antlr/grammars-v4.
 
 Usage:
